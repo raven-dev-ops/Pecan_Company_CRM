@@ -42,6 +42,7 @@ class Sale(Base):
 
     sale_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     receipt_number: Mapped[str] = mapped_column(Unicode(20), unique=True)
+    finalize_idempotency_key: Mapped[str | None] = mapped_column(Unicode(64), unique=True)
     customer_id: Mapped[int | None] = mapped_column(ForeignKey("customers.customer_id"))
     payment_method: Mapped[str] = mapped_column(Unicode(20))
     status: Mapped[str] = mapped_column(Unicode(20), default="FINALIZED")

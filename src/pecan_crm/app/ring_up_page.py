@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
+from uuid import uuid4
 
 from PySide6.QtWidgets import (
     QComboBox,
@@ -20,7 +21,12 @@ from PySide6.QtWidgets import (
 )
 
 from pecan_crm.config.store import ConfigStore
-from pecan_crm.db.repositories.sales import CartLineInput, FinalizeSaleInput, SalesRepository
+from pecan_crm.db.repositories.sales import (
+    CartLineInput,
+    FinalizePartialFailure,
+    FinalizeSaleInput,
+    SalesRepository,
+)
 from pecan_crm.db.runtime import build_session_factory_from_settings
 from pecan_crm.domain.pricing import SaleLine, calculate_totals, line_subtotal
 
@@ -40,6 +46,7 @@ class RingUpPage(QWidget):
         super().__init__()
         self.config_store = ConfigStore()
         self.cart: list[CartRow] = []
+        self.pending_finalize_key: str | None = None
 
         self.product_search_input = QLineEdit()
         self.product_search_input.setPlaceholderText("Search products")
@@ -208,6 +215,7 @@ class RingUpPage(QWidget):
                 weight_lbs=weight,
             )
         )
+        self.pending_finalize_key = None
         self._refresh_cart_table()
         self._recalculate_totals()
 
@@ -234,6 +242,7 @@ class RingUpPage(QWidget):
             return
         row = selected[0].row()
         self.cart.pop(row)
+        self.pending_finalize_key = None
         self._refresh_cart_table()
         self._recalculate_totals()
 
@@ -300,6 +309,7 @@ class RingUpPage(QWidget):
             business_name=config.business.name,
             business_address=config.business.address,
             business_phone=config.business.phone,
+            idempotency_key=self._current_finalize_key(),
         )
 
         try:
@@ -309,8 +319,24 @@ class RingUpPage(QWidget):
                 "Sale Complete",
                 f"Sale #{result.sale_id} saved. Receipt {result.receipt_number} generated at:\n{result.receipt_path}",
             )
+            self.pending_finalize_key = None
             self.cart.clear()
             self._refresh_cart_table()
             self._recalculate_totals()
+        except FinalizePartialFailure as exc:
+            QMessageBox.warning(
+                self,
+                "Finalize Partial Success",
+                (
+                    "Sale was saved but receipt generation failed.\n"
+                    "Retry Finalize to regenerate using the same correlation key.\n\n"
+                    f"{exc}"
+                ),
+            )
         except Exception as exc:
             QMessageBox.critical(self, "Finalize Sale", f"Failed to finalize sale: {exc}")
+
+    def _current_finalize_key(self) -> str:
+        if not self.pending_finalize_key:
+            self.pending_finalize_key = str(uuid4())
+        return self.pending_finalize_key

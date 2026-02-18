@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import logging
 from dataclasses import dataclass
 from datetime import date, datetime, time
 from decimal import Decimal
@@ -13,6 +14,9 @@ from pecan_crm.db.models import Customer, Product, Sale, SaleItem
 from pecan_crm.domain.pricing import SaleLine, calculate_totals, line_subtotal
 from pecan_crm.domain.receipt_numbers import format_receipt_number
 from pecan_crm.services.receipts import ReceiptData, ReceiptLine, generate_receipt_pdf
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -35,6 +39,7 @@ class FinalizeSaleInput:
     business_name: str
     business_address: str
     business_phone: str
+    idempotency_key: str
 
 
 @dataclass(frozen=True)
@@ -42,6 +47,17 @@ class FinalizeSaleResult:
     sale_id: int
     receipt_number: str
     receipt_path: Path
+
+
+class FinalizePartialFailure(RuntimeError):
+    def __init__(self, *, sale_id: int, receipt_number: str, correlation_id: str, error: Exception) -> None:
+        super().__init__(
+            f"Sale persisted as {sale_id} (receipt {receipt_number}), but receipt generation failed. Correlation ID: {correlation_id}. Error: {error}"
+        )
+        self.sale_id = sale_id
+        self.receipt_number = receipt_number
+        self.correlation_id = correlation_id
+        self.error = error
 
 
 @dataclass(frozen=True)
@@ -100,7 +116,36 @@ class SalesRepository:
         if not payload.cart_lines:
             raise ValueError("Cart is empty")
 
+        correlation_id = payload.idempotency_key.strip()
+        if not correlation_id:
+            raise ValueError("Finalize idempotency key is required")
+
+        LOGGER.info("Finalize requested. correlation_id=%s", correlation_id)
+
         with self.session_factory() as session:
+            existing = session.scalar(
+                select(Sale).where(Sale.finalize_idempotency_key == correlation_id)
+            )
+            if existing is not None:
+                LOGGER.info(
+                    "Finalize idempotent replay detected. correlation_id=%s sale_id=%s",
+                    correlation_id,
+                    existing.sale_id,
+                )
+                receipt_path = self._build_receipt_pdf_for_sale(
+                    session=session,
+                    sale=existing,
+                    receipt_folder=payload.receipt_folder,
+                    business_name=payload.business_name,
+                    business_address=payload.business_address,
+                    business_phone=payload.business_phone,
+                )
+                return FinalizeSaleResult(
+                    sale_id=existing.sale_id,
+                    receipt_number=existing.receipt_number,
+                    receipt_path=receipt_path,
+                )
+
             product_ids = [line.product_id for line in payload.cart_lines]
             products = list(session.scalars(select(Product).where(Product.product_id.in_(product_ids))).all())
             product_map = {p.product_id: p for p in products}
@@ -109,25 +154,15 @@ class SalesRepository:
                 raise ValueError("One or more selected products no longer exist")
 
             pricing_lines: list[SaleLine] = []
-            receipt_lines: list[ReceiptLine] = []
 
             for cart_line in payload.cart_lines:
                 product = product_map[cart_line.product_id]
-                sale_line = SaleLine(
-                    unit_type=product.unit_type,
-                    unit_price=Decimal(str(product.unit_price)),
-                    quantity=cart_line.quantity,
-                    weight_lbs=cart_line.weight_lbs,
-                )
-                pricing_lines.append(sale_line)
-                receipt_lines.append(
-                    ReceiptLine(
-                        name=product.name,
+                pricing_lines.append(
+                    SaleLine(
                         unit_type=product.unit_type,
+                        unit_price=Decimal(str(product.unit_price)),
                         quantity=cart_line.quantity,
                         weight_lbs=cart_line.weight_lbs,
-                        unit_price=Decimal(str(product.unit_price)),
-                        line_subtotal=line_subtotal(sale_line),
                     )
                 )
 
@@ -144,6 +179,7 @@ class SalesRepository:
 
             sale = Sale(
                 receipt_number=receipt_number,
+                finalize_idempotency_key=correlation_id,
                 customer_id=payload.customer_id,
                 payment_method=payment_method,
                 status="FINALIZED",
@@ -172,27 +208,39 @@ class SalesRepository:
                 )
 
             session.commit()
-
-            customer_summary = self._customer_summary(session, payload.customer_id)
-            receipt_data = ReceiptData(
-                receipt_number=receipt_number,
-                sold_at_local=datetime.now(),
-                business_name=payload.business_name,
-                business_address=payload.business_address,
-                business_phone=payload.business_phone,
-                payment_method=payment_method,
-                customer_summary=customer_summary,
-                subtotal=totals.subtotal,
-                discount_total=totals.discount_total,
-                tax_total=totals.tax_total,
-                total=totals.total,
-                lines=receipt_lines,
+            LOGGER.info(
+                "Sale persisted successfully. correlation_id=%s sale_id=%s receipt=%s",
+                correlation_id,
+                sale.sale_id,
+                sale.receipt_number,
             )
-            receipt_path = generate_receipt_pdf(payload.receipt_folder, receipt_data)
+
+            try:
+                receipt_path = self._build_receipt_pdf_for_sale(
+                    session=session,
+                    sale=sale,
+                    receipt_folder=payload.receipt_folder,
+                    business_name=payload.business_name,
+                    business_address=payload.business_address,
+                    business_phone=payload.business_phone,
+                )
+            except Exception as exc:
+                LOGGER.exception(
+                    "Receipt generation failed after sale commit. correlation_id=%s sale_id=%s receipt=%s",
+                    correlation_id,
+                    sale.sale_id,
+                    sale.receipt_number,
+                )
+                raise FinalizePartialFailure(
+                    sale_id=sale.sale_id,
+                    receipt_number=sale.receipt_number,
+                    correlation_id=correlation_id,
+                    error=exc,
+                ) from exc
 
             return FinalizeSaleResult(
                 sale_id=sale.sale_id,
-                receipt_number=receipt_number,
+                receipt_number=sale.receipt_number,
                 receipt_path=receipt_path,
             )
 
@@ -269,38 +317,14 @@ class SalesRepository:
             if sale is None:
                 raise ValueError("Sale not found")
 
-            items = list(
-                session.scalars(select(SaleItem).where(SaleItem.sale_id == sale_id).order_by(SaleItem.sale_item_id))
-            )
-            customer_summary = self._customer_summary(session, sale.customer_id)
-
-            receipt_lines = [
-                ReceiptLine(
-                    name=item.product_name_snapshot,
-                    unit_type=item.unit_type,
-                    quantity=Decimal(str(item.quantity)) if item.quantity is not None else None,
-                    weight_lbs=Decimal(str(item.weight_lbs)) if item.weight_lbs is not None else None,
-                    unit_price=Decimal(str(item.unit_price)),
-                    line_subtotal=Decimal(str(item.line_subtotal)),
-                )
-                for item in items
-            ]
-
-            receipt_data = ReceiptData(
-                receipt_number=sale.receipt_number,
-                sold_at_local=sale.sold_at_utc,
+            return self._build_receipt_pdf_for_sale(
+                session=session,
+                sale=sale,
+                receipt_folder=receipt_folder,
                 business_name=business_name,
                 business_address=business_address,
                 business_phone=business_phone,
-                payment_method=sale.payment_method,
-                customer_summary=customer_summary,
-                subtotal=Decimal(str(sale.subtotal)),
-                discount_total=Decimal(str(sale.discount_total)),
-                tax_total=Decimal(str(sale.tax_total)),
-                total=Decimal(str(sale.total)),
-                lines=receipt_lines,
             )
-            return generate_receipt_pdf(receipt_folder, receipt_data)
 
     def void_sale(self, *, sale_id: int, reason: str) -> None:
         reason = reason.strip()
@@ -429,6 +453,51 @@ class SalesRepository:
             "sales": sales_path,
             "sale_items": sale_items_path,
         }
+
+    def _build_receipt_pdf_for_sale(
+        self,
+        *,
+        session: Session,
+        sale: Sale,
+        receipt_folder: Path,
+        business_name: str,
+        business_address: str,
+        business_phone: str,
+    ) -> Path:
+        items = list(
+            session.scalars(
+                select(SaleItem).where(SaleItem.sale_id == sale.sale_id).order_by(SaleItem.sale_item_id)
+            )
+        )
+        customer_summary = self._customer_summary(session, sale.customer_id)
+
+        receipt_lines = [
+            ReceiptLine(
+                name=item.product_name_snapshot,
+                unit_type=item.unit_type,
+                quantity=Decimal(str(item.quantity)) if item.quantity is not None else None,
+                weight_lbs=Decimal(str(item.weight_lbs)) if item.weight_lbs is not None else None,
+                unit_price=Decimal(str(item.unit_price)),
+                line_subtotal=Decimal(str(item.line_subtotal)),
+            )
+            for item in items
+        ]
+
+        receipt_data = ReceiptData(
+            receipt_number=sale.receipt_number,
+            sold_at_local=sale.sold_at_utc,
+            business_name=business_name,
+            business_address=business_address,
+            business_phone=business_phone,
+            payment_method=sale.payment_method,
+            customer_summary=customer_summary,
+            subtotal=Decimal(str(sale.subtotal)),
+            discount_total=Decimal(str(sale.discount_total)),
+            tax_total=Decimal(str(sale.tax_total)),
+            total=Decimal(str(sale.total)),
+            lines=receipt_lines,
+        )
+        return generate_receipt_pdf(receipt_folder, receipt_data)
 
     @staticmethod
     def _customer_summary(session: Session, customer_id: int | None) -> str:

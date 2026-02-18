@@ -14,6 +14,7 @@ Companion SQL: `docs/schema/canonical_schema.sql`
 ## Key design points
 - All primary entities have audit timestamps (`created_at_utc`, `updated_at_utc`).
 - `sales.receipt_number` is unique and required at finalize time.
+- `sales.finalize_idempotency_key` is unique and enables retry-safe finalize behavior.
 - Product supports `EACH` and `WEIGHT` units.
 - `sales` stores persisted totals (`subtotal`, `discount_total`, `tax_total`, `total`).
 - Soft deletion/archive is supported through status flags.

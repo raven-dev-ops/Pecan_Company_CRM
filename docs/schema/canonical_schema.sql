@@ -28,6 +28,7 @@ CREATE TABLE products (
 CREATE TABLE sales (
     sale_id BIGINT IDENTITY(1,1) PRIMARY KEY,
     receipt_number NVARCHAR(20) NOT NULL,
+    finalize_idempotency_key NVARCHAR(64) NULL,
     customer_id BIGINT NULL,
     payment_method NVARCHAR(20) NOT NULL,
     status NVARCHAR(20) NOT NULL CONSTRAINT DF_sales_status DEFAULT ('FINALIZED'),
@@ -40,6 +41,7 @@ CREATE TABLE sales (
     created_at_utc DATETIME2 NOT NULL CONSTRAINT DF_sales_created_at DEFAULT (SYSUTCDATETIME()),
     updated_at_utc DATETIME2 NOT NULL CONSTRAINT DF_sales_updated_at DEFAULT (SYSUTCDATETIME()),
     CONSTRAINT UQ_sales_receipt_number UNIQUE (receipt_number),
+    CONSTRAINT UQ_sales_finalize_idempotency_key UNIQUE (finalize_idempotency_key),
     CONSTRAINT FK_sales_customer FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
     CONSTRAINT CK_sales_payment_method CHECK (payment_method IN ('CASH', 'CARD', 'OTHER')),
     CONSTRAINT CK_sales_status CHECK (status IN ('FINALIZED', 'VOIDED')),
