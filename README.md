@@ -6,7 +6,6 @@ This repository currently contains planning and GitHub issue bootstrap assets fo
 - `Pecan_POS_Azure_Access_Issues.md`: Updated master requirements/issues document.
 - `issues.json`: GitHub labels + issue definitions for bulk issue creation.
 - `scripts/create_issues.py`: Script to create labels and issues via GitHub CLI.
-- `CLIENT_EMAIL_DRAFT.md`: Client-ready email draft for Joshua Turk.
 
 ## Create GitHub Issues
 1. Install GitHub CLI (`gh`) and authenticate:
