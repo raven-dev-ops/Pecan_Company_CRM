@@ -5,6 +5,7 @@ import sys
 
 from PySide6.QtWidgets import QApplication
 
+from pecan_crm.config.env import load_env_file
 from pecan_crm.app.logging_utils import configure_logging
 from pecan_crm.app.main_window import MainWindow
 
@@ -13,6 +14,7 @@ APP_NAME = "PecanCRM"
 
 
 def run() -> int:
+    load_env_file()
     log_path = configure_logging(APP_NAME)
     logging.getLogger(__name__).info("Starting app; log file: %s", log_path)
 

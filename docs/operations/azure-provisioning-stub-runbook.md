@@ -5,15 +5,16 @@ Issue links: #7, #8, #9, #12
 ## Scope
 This runbook provides stubbed-but-executable scripts/templates for Azure infrastructure setup when direct tenant access is not available during development.
 
+All scripts auto-load values from `.env` (if present) via `scripts/azure/load_env.ps1`.
+
+## Demo value source
+Start from:
+- `.env.example` (copy to `.env` and replace later)
+
 ## #7 Azure SQL Server + Database (stub)
 Use Bicep template deployment:
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/azure/deploy_infra_stub.ps1 `
-  -SubscriptionId <sub-id> `
-  -ResourceGroup rg-pecan-crm-prod `
-  -Location eastus `
-  -ParametersFile infra/azure/parameters.example.json `
-  -WhatIf
+powershell -ExecutionPolicy Bypass -File scripts/azure/deploy_infra_stub.ps1 -WhatIf
 ```
 
 Then run without `-WhatIf` to deploy.
@@ -24,10 +25,7 @@ Validation:
 
 ## #8 Firewall/IP allow list (stub)
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/azure/configure_firewall_stub.ps1 `
-  -ResourceGroup rg-pecan-crm-prod `
-  -SqlServerName sql-pecan-crm-prod `
-  -AllowedPublicIps @('203.0.113.10','198.51.100.5')
+powershell -ExecutionPolicy Bypass -File scripts/azure/configure_firewall_stub.ps1
 ```
 
 Validation:
@@ -36,11 +34,7 @@ Validation:
 
 ## #9 Least-privilege app login/user (stub)
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/azure/app_login_stub.ps1 `
-  -SqlServerFqdn sql-pecan-crm-prod.database.windows.net `
-  -SqlAdminUser pecan_admin `
-  -SqlAdminPassword <secure-value> `
-  -SqlScriptPath infra/azure/sql/create_app_login_user.sql
+powershell -ExecutionPolicy Bypass -File scripts/azure/app_login_stub.ps1
 ```
 
 Validation:
@@ -49,10 +43,7 @@ Validation:
 
 ## #12 Optional Blob receipts archiving (stub)
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/azure/deploy_blob_stub.ps1 `
-  -ResourceGroup rg-pecan-crm-prod `
-  -StorageAccountName stpecancrmprod `
-  -ContainerName receipts
+powershell -ExecutionPolicy Bypass -File scripts/azure/deploy_blob_stub.ps1
 ```
 
 Upload strategy (for future code path):

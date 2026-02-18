@@ -5,28 +5,34 @@ import os
 
 from pydantic import BaseModel, Field
 
+from pecan_crm.config.env import env_bool, env_float, env_str
+
 
 def default_receipt_folder() -> str:
     program_data = os.getenv("PROGRAMDATA", r"C:\ProgramData")
-    return str(Path(program_data) / "PecanCRM" / "receipts")
+    return env_str("APP_RECEIPT_FOLDER", str(Path(program_data) / "PecanCRM" / "receipts"))
 
 
 class DatabaseConfig(BaseModel):
-    server: str = ""
-    database: str = ""
-    username: str = ""
+    server: str = Field(default_factory=lambda: env_str("AZURE_SQL_SERVER_FQDN"))
+    database: str = Field(default_factory=lambda: env_str("AZURE_SQL_DATABASE"))
+    username: str = Field(default_factory=lambda: env_str("AZURE_APP_LOGIN"))
 
 
 class BusinessProfileConfig(BaseModel):
-    name: str = ""
-    address: str = ""
-    phone: str = ""
+    name: str = Field(default_factory=lambda: env_str("APP_BUSINESS_NAME"))
+    address: str = Field(default_factory=lambda: env_str("APP_BUSINESS_ADDRESS"))
+    phone: str = Field(default_factory=lambda: env_str("APP_BUSINESS_PHONE"))
     logo_path: str = ""
 
 
 class TaxConfig(BaseModel):
-    enabled: bool = False
-    rate_percent: float = Field(default=0.0, ge=0.0, le=100.0)
+    enabled: bool = Field(default_factory=lambda: env_bool("APP_TAX_ENABLED", False))
+    rate_percent: float = Field(
+        default_factory=lambda: env_float("APP_TAX_RATE_PERCENT", 0.0),
+        ge=0.0,
+        le=100.0,
+    )
 
 
 class AppConfig(BaseModel):

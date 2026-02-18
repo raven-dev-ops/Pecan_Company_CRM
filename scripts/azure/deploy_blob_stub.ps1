@@ -1,15 +1,23 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$ResourceGroup,
+    [string]$ResourceGroup = "",
 
-    [Parameter(Mandatory = $true)]
-    [string]$StorageAccountName,
+    [string]$StorageAccountName = "",
 
     [Parameter(Mandatory = $false)]
-    [string]$ContainerName = "receipts"
+    [string]$ContainerName = ""
 )
 
 $ErrorActionPreference = "Stop"
+$root = Split-Path -Parent $MyInvocation.MyCommand.Path | Split-Path -Parent | Split-Path -Parent
+$envLoader = Join-Path $root "scripts/azure/load_env.ps1"
+if (Test-Path $envLoader) { & $envLoader | Out-Null }
+
+if (-not $ResourceGroup) { $ResourceGroup = $env:AZURE_RESOURCE_GROUP }
+if (-not $StorageAccountName) { $StorageAccountName = $env:AZURE_STORAGE_ACCOUNT }
+if (-not $ContainerName) { $ContainerName = $env:AZURE_STORAGE_CONTAINER; if (-not $ContainerName) { $ContainerName = "receipts" } }
+
+if (-not $ResourceGroup) { throw "ResourceGroup is required (arg or AZURE_RESOURCE_GROUP)." }
+if (-not $StorageAccountName) { throw "StorageAccountName is required (arg or AZURE_STORAGE_ACCOUNT)." }
 
 az storage account create `
   --resource-group $ResourceGroup `

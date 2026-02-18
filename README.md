@@ -15,6 +15,7 @@ Windows desktop CRM/POS for Pecan Company.
 - `docs/operations/`: backup, restore, and release operations
 - `infra/azure/`: Azure provisioning stubs/templates
 - `scripts/azure/`: Azure CLI/SQL helper scripts
+- `.env.example`: demo values for local stubbed execution
 - `src/pecan_crm/`: application source
 - `tests/`: automated tests
 
