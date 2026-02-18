@@ -1,0 +1,9 @@
+# Django 6.x requires Python 3.12+ (see Django 6.0 release notes).
+Django==6.0.2
+
+# Optional quality-of-life for local development (loads .env automatically in settings.py).
+python-dotenv>=1.0,<2.0
+
+# Optional (later): Azure SQL / SQL Server backend.
+# mssql-django>=1.6
+# pyodbc>=5.0
