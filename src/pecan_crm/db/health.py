@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
 
 from pecan_crm.db.connection import create_db_engine
 from pecan_crm.db.retry import run_with_retry
