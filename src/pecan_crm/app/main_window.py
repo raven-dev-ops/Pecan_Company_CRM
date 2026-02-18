@@ -15,6 +15,7 @@ from pecan_crm.app.pages import PAGES, PlaceholderPage
 from pecan_crm.app.products_page import ProductsPage
 from pecan_crm.app.settings_page import SettingsPage
 from pecan_crm.app.customers_page import CustomersPage
+from pecan_crm.app.ring_up_page import RingUpPage
 from pecan_crm import __version__
 
 
@@ -53,9 +54,10 @@ class MainWindow(QMainWindow):
         self._add_page("settings", "Settings", SettingsPage())
         self._add_page("products", "Products", ProductsPage())
         self._add_page("customers", "Customers", CustomersPage())
+        self._add_page("ring_up", "Ring-Up", RingUpPage())
 
         for page in PAGES:
-            if page.key in {"settings", "products", "customers"}:
+            if page.key in {"settings", "products", "customers", "ring_up"}:
                 continue
             widget = PlaceholderPage(page.title, page.placeholder_text)
             self._add_page(page.key, page.title, widget)
