@@ -4,6 +4,7 @@ Issue link: #45
 
 Required checks for merge:
 - `lint-and-tests`
+- `backend-django-tests`
 - `migration-sql-smoke`
 - `windows-packaging-smoke`
 
