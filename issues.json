@@ -1,0 +1,72 @@
+{
+  "labels_to_create": [
+    { "name": "priority:P0", "color": "B60205", "description": "Must-have for MVP / release" },
+    { "name": "priority:P1", "color": "D93F0B", "description": "Should-have; schedule after P0" },
+    { "name": "priority:P2", "color": "FBCA04", "description": "Nice-to-have / backlog" },
+    { "name": "area:discovery", "color": "0E8A16", "description": "Requirements, decisions, clarification" },
+    { "name": "area:azure", "color": "1D76DB", "description": "Azure SQL, firewall, credentials" },
+    { "name": "area:db", "color": "5319E7", "description": "Schema, migrations, DB layer" },
+    { "name": "area:migration", "color": "006B75", "description": "Legacy Access extraction + migration + cutover" },
+    { "name": "area:pos", "color": "C2E0C6", "description": "Ring-up flow / checkout UI" },
+    { "name": "area:receipt", "color": "F9D0C4", "description": "PDF receipts / printing / numbering" },
+    { "name": "area:customers", "color": "D4C5F9", "description": "Customer CRUD / lookup / history" },
+    { "name": "area:reporting", "color": "FEF2C0", "description": "Sales history, summaries, exports" },
+    { "name": "area:packaging", "color": "BFDADC", "description": "PyInstaller, installer, deployment" },
+    { "name": "area:qa", "color": "E99695", "description": "Testing, release checks" },
+    { "name": "type:feature", "color": "7057FF", "description": "New functionality" },
+    { "name": "type:docs", "color": "0075CA", "description": "Documentation only" },
+    { "name": "type:chore", "color": "A2EEEF", "description": "Setup, refactor, non-user-facing work" }
+  ],
+  "issues": [
+    {
+      "title": "Discovery: Confirm legacy Microsoft Access setup (local tables vs linked SQL)",
+      "labels": ["priority:P0", "area:discovery", "area:migration", "type:docs"],
+      "body": "Goal: remove ambiguity about what Access is storing and how.\n\nAcceptance criteria:\n- Identify whether Access contains tables locally (.accdb/.mdb) or is a front-end to an existing SQL database (linked tables/ODBC).\n- Inventory existing entities and fields (customers/products/sales if present).\n- Capture file locations, passwords, and any existing reports/forms that matter.\n"
+    },
+    {
+      "title": "Discovery: Define MVP workflow + screens (simple Python desktop app)",
+      "labels": ["priority:P0", "area:discovery", "type:docs"],
+      "body": "Acceptance criteria:\n- Document the minimum screens: Settings, Products, Customers, Ring-Up, Tender/Finalize, Sales History.\n- Document end-to-end flow: customer optional → ring items → payment method → PDF receipt → save sale.\n- Confirm non-goals for MVP (no payment processing integration; just record method).\n"
+    },
+    {
+      "title": "Azure: Provision Azure SQL Server + Database (production)",
+      "labels": ["priority:P0", "area:azure", "type:chore"],
+      "body": "Acceptance criteria:\n- Azure SQL Server + single database created in chosen region.\n- Connection endpoint confirmed (server.database.windows.net).\n- Basic connectivity tested from a Windows client machine.\n"
+    },
+    {
+      "title": "DB: Design canonical schema (customers/products/sales/sale_items/settings)",
+      "labels": ["priority:P0", "area:db", "type:docs"],
+      "body": "Acceptance criteria:\n- Tables and columns defined with primary keys + foreign keys.\n- Includes receipt number field and audit timestamps.\n- Supports both unit and weight-based sales.\n"
+    },
+    {
+      "title": "Migration: Build repeatable migration script (Access/export → Azure SQL)",
+      "labels": ["priority:P0", "area:migration", "area:db", "type:feature"],
+      "body": "Acceptance criteria:\n- Script can be run multiple times in staging.\n- Produces a migration report (rows inserted/skipped/errors).\n- Does not create duplicates when re-run (idempotent strategy documented).\n"
+    },
+    {
+      "title": "POS: Ring-up cart (add items, qty/weight, remove, totals)",
+      "labels": ["priority:P0", "area:pos", "type:feature"],
+      "body": "Acceptance criteria:\n- Add product to cart.\n- Enter quantity for unit items; enter weight for weight items.\n- Live subtotal/tax/total.\n- Remove line items.\n"
+    },
+    {
+      "title": "Receipts: Generate PDF receipt locally for each completed sale",
+      "labels": ["priority:P0", "area:receipt", "type:feature"],
+      "body": "Acceptance criteria:\n- PDF includes required receipt fields.\n- Saved to configured local folder with predictable naming.\n- Handles long carts cleanly.\n"
+    },
+    {
+      "title": "Reporting: Sales History screen with filters",
+      "labels": ["priority:P0", "area:reporting", "type:feature"],
+      "body": "Acceptance criteria:\n- Filter by date range and/or receipt #.\n- View sale detail (items, totals, payment method).\n- Open/reprint receipt.\n"
+    },
+    {
+      "title": "Packaging: Build Windows .exe via PyInstaller (no Python install required)",
+      "labels": ["priority:P0", "area:packaging", "type:chore"],
+      "body": "Acceptance criteria:\n- Release build runs on a clean Windows 10/11 machine.\n- Includes required dependencies.\n- Startup and checkout tested.\n"
+    },
+    {
+      "title": "QA: Smoke test checklist on target workflow (ring-up → receipt → history)",
+      "labels": ["priority:P0", "area:qa", "type:docs"],
+      "body": "Acceptance criteria:\n- Checklist covers: fresh install, connect to Azure SQL, add product, add customer, complete sale, receipt PDF, reprint.\n- Issues logged and triaged.\n"
+    }
+  ]
+}
