@@ -12,7 +12,9 @@ from PySide6.QtWidgets import (
 )
 
 from pecan_crm.app.pages import PAGES, PlaceholderPage
+from pecan_crm.app.products_page import ProductsPage
 from pecan_crm.app.settings_page import SettingsPage
+from pecan_crm.app.customers_page import CustomersPage
 from pecan_crm import __version__
 
 
@@ -49,9 +51,11 @@ class MainWindow(QMainWindow):
 
     def _build_pages(self) -> None:
         self._add_page("settings", "Settings", SettingsPage())
+        self._add_page("products", "Products", ProductsPage())
+        self._add_page("customers", "Customers", CustomersPage())
 
         for page in PAGES:
-            if page.key == "settings":
+            if page.key in {"settings", "products", "customers"}:
                 continue
             widget = PlaceholderPage(page.title, page.placeholder_text)
             self._add_page(page.key, page.title, widget)
