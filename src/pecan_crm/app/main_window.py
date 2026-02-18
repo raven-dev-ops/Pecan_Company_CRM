@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
 
 from pecan_crm.app.pages import PAGES, PlaceholderPage
 from pecan_crm.app.settings_page import SettingsPage
+from pecan_crm import __version__
 
 
 LOGGER = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ LOGGER = logging.getLogger(__name__)
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Pecan Company CRM")
+        self.setWindowTitle(f"Pecan Company CRM v{__version__}")
         self.resize(1200, 750)
 
         root = QWidget()
@@ -44,7 +45,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.stack, stretch=1)
 
         self.setCentralWidget(root)
-        self.statusBar().showMessage("Ready")
+        self.statusBar().showMessage(f"Ready | Version {__version__}")
 
         if self.nav.count() > 0:
             self.nav.setCurrentRow(0)
