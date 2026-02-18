@@ -13,6 +13,8 @@ Windows desktop CRM/POS for Pecan Company.
 - `docs/migration/`: Access to Azure SQL mapping and migration strategy
 - `docs/security/`: auth and secrets handling
 - `docs/operations/`: backup, restore, and release operations
+- `infra/azure/`: Azure provisioning stubs/templates
+- `scripts/azure/`: Azure CLI/SQL helper scripts
 - `src/pecan_crm/`: application source
 - `tests/`: automated tests
 
