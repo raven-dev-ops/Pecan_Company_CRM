@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pecan CRM Web Preview</title>
+  <style>
+    :root {
+      --paper: #f7f3e8;
+      --ink: #1f2a2d;
+      --forest: #1f5b4f;
+      --mint: #d8efe6;
+      --amber: #d38f32;
+      --rust: #8a3f26;
+      --card: #fffdf7;
+      --shadow: rgba(26, 37, 40, 0.16);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Bahnschrift", "Trebuchet MS", "Gill Sans", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 18%, rgba(211, 143, 50, 0.25), transparent 26%),
+        radial-gradient(circle at 88% 8%, rgba(31, 91, 79, 0.2), transparent 22%),
+        linear-gradient(145deg, #fbf8ef 0%, #eef6f3 100%);
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 1240px;
+      margin: 28px auto;
+      padding: 22px;
+      display: grid;
+      gap: 18px;
+      grid-template-columns: 280px 1fr;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid rgba(31, 91, 79, 0.1);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 28px var(--shadow);
+    }
+
+    .sidebar {
+      padding: 18px;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--forest), #2a7a69);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+    }
+
+    .nav {
+      display: grid;
+      gap: 10px;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: var(--ink);
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f4f7f6;
+      border: 1px solid rgba(31, 91, 79, 0.08);
+      font-size: 0.95rem;
+    }
+
+    .nav a.active {
+      background: linear-gradient(135deg, #e5f4ee, #e8f0ef);
+      border-color: rgba(31, 91, 79, 0.24);
+      font-weight: 700;
+    }
+
+    .main {
+      padding: 20px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .hero {
+      padding: 18px;
+      border-radius: 14px;
+      background:
+        linear-gradient(120deg, rgba(31, 91, 79, 0.95), rgba(34, 110, 93, 0.88)),
+        linear-gradient(220deg, rgba(211, 143, 50, 0.25), transparent 60%);
+      color: #fdfdf8;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: "Franklin Gothic Medium", "Trebuchet MS", sans-serif;
+      letter-spacing: 0.3px;
+    }
+
+    .hero p {
+      margin: 10px 0 0;
+      opacity: 0.9;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--card);
+      border: 1px solid rgba(31, 91, 79, 0.14);
+      box-shadow: 0 6px 14px rgba(31, 91, 79, 0.08);
+    }
+
+    .metric .label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.75;
+    }
+
+    .metric .value {
+      font-size: 1.75rem;
+      margin-top: 6px;
+      color: var(--forest);
+      font-weight: 700;
+    }
+
+    .two-up {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1.3fr 1fr;
+    }
+
+    .card {
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--card);
+      border: 1px solid rgba(31, 91, 79, 0.14);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      color: var(--rust);
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #f6fbf8;
+      border: 1px solid rgba(31, 91, 79, 0.12);
+    }
+
+    .chip {
+      align-self: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--mint);
+      color: var(--forest);
+    }
+
+    .pending {
+      font-size: 0.85rem;
+      margin-top: 8px;
+      color: #4e5d60;
+      border-left: 3px solid var(--amber);
+      padding-left: 10px;
+    }
+
+    .mobile-nav {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .shell {
+        grid-template-columns: 1fr;
+        max-width: 740px;
+      }
+
+      .sidebar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .grid { grid-template-columns: 1fr 1fr; }
+      .two-up { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      body { background: linear-gradient(180deg, #f9f5ea, #edf7f2); }
+
+      .shell {
+        margin: 0;
+        padding: 10px;
+        gap: 10px;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .main {
+        padding: 12px;
+        gap: 12px;
+      }
+
+      .hero h1 { font-size: 1.25rem; }
+      .hero p { font-size: 0.9rem; }
+      .grid { grid-template-columns: 1fr; }
+
+      .mobile-nav {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        position: sticky;
+        bottom: 0;
+        gap: 8px;
+        background: rgba(247, 243, 232, 0.92);
+        padding: 10px;
+        border-top: 1px solid rgba(31, 91, 79, 0.18);
+        backdrop-filter: blur(6px);
+      }
+
+      .mobile-nav span {
+        text-align: center;
+        font-size: 0.74rem;
+        padding: 6px;
+        border-radius: 10px;
+        background: #fff;
+        border: 1px solid rgba(31, 91, 79, 0.1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="panel sidebar">
+      <div class="brand">
+        <div class="badge">PC</div>
+        <div>
+          <strong>Pecan CRM</strong><br />
+          <small>Web App Preview</small>
+        </div>
+      </div>
+      <nav class="nav">
+        <a class="active" href="#">Dashboard</a>
+        <a href="#">Ring-Up</a>
+        <a href="#">Sales History</a>
+        <a href="#">Customers</a>
+        <a href="#">Products</a>
+      </nav>
+      <div class="pending">
+        Pending webapp development: this screen is a visual contract for desktop/mobile layout and spacing.
+      </div>
+    </aside>
+
+    <main class="panel main">
+      <section class="hero">
+        <h1>Sales Operations Snapshot</h1>
+        <p>Baseline responsive shell for planned web workflow. Desktop and mobile screenshots are generated via Playwright.</p>
+      </section>
+
+      <section class="grid">
+        <article class="metric">
+          <div class="label">Today Total</div>
+          <div class="value">$2,418</div>
+        </article>
+        <article class="metric">
+          <div class="label">Open Queue</div>
+          <div class="value">3</div>
+        </article>
+        <article class="metric">
+          <div class="label">Avg Ticket</div>
+          <div class="value">$27.40</div>
+        </article>
+      </section>
+
+      <section class="two-up">
+        <article class="card">
+          <h2>Recent Transactions</h2>
+          <div class="list">
+            <div class="row"><span>Receipt #004351 · Card</span><span class="chip">$84.30</span></div>
+            <div class="row"><span>Receipt #004350 · Cash</span><span class="chip">$23.10</span></div>
+            <div class="row"><span>Receipt #004349 · Other</span><span class="chip">$41.00</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Alerts</h2>
+          <div class="list">
+            <div class="row"><span>2 receipts pending sync</span><span class="chip">Queue</span></div>
+            <div class="row"><span>Inventory data refresh overdue</span><span class="chip">Ops</span></div>
+            <div class="row"><span>Printer check recommended</span><span class="chip">POS</span></div>
+          </div>
+        </article>
+      </section>
+
+      <div class="mobile-nav">
+        <span>Home</span>
+        <span>Ring-Up</span>
+        <span>History</span>
+        <span>More</span>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

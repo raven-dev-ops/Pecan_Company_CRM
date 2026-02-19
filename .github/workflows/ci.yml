@@ -56,11 +56,11 @@ jobs:
       - name: Render upgrade SQL
         env:
           DATABASE_URL: mssql+pyodbc://user:pass@server.database.windows.net/db?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=no
-        run: alembic upgrade head --sql > upgrade.sql
+        run: python -m alembic upgrade head --sql > upgrade.sql
       - name: Render downgrade SQL
         env:
           DATABASE_URL: mssql+pyodbc://user:pass@server.database.windows.net/db?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes&TrustServerCertificate=no
-        run: alembic downgrade base --sql > downgrade.sql
+        run: python -m alembic downgrade head:base --sql > downgrade.sql
 
   windows-packaging-smoke:
     runs-on: windows-latest

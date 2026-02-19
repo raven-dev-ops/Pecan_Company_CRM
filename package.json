@@ -1,0 +1,14 @@
+{
+  "name": "pecan-company-crm-web-preview",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Playwright screenshot harness for Pecan CRM web preview.",
+  "scripts": {
+    "screenshots": "playwright test tests/e2e/screenshot.spec.js",
+    "screenshots:desktop": "playwright test tests/e2e/screenshot.spec.js --project=desktop",
+    "screenshots:mobile": "playwright test tests/e2e/screenshot.spec.js --project=mobile"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
